@@ -3,10 +3,18 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"image"
+	"image/png"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/google/uuid"
+)
+
+const (
+	staticDir    = "imgs"
+	staticPrefix = "/imgs/"
 )
 
 type Data struct {
@@ -22,26 +30,28 @@ func preview(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("%v", urls)
 
-	previews := make([][]byte, 0, len(urls))
+	previewUrls := make([]string, 0, len(urls))
 	for _, url := range urls {
-		image, err := loadImage(url)
+		img, err := loadImage(url)
 		if err != nil {
-			log.Printf("Error on get request to %s", url)
+			log.Printf("Error on load image from %s", url)
 			continue
 		}
 
-		preview, err := createPreview(image)
+		preview, err := createPreview(img)
 		if err != nil {
 			log.Print(err)
 			continue
 		}
 
-		previews = append(previews, preview)
+		previewFile, err := saveImage(preview)
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+
+		previewUrls = append(previewUrls, staticPrefix+previewFile)
 	}
-
-	previewUrls := make([]string, 0, len(previews))
-
-	previewUrls = append(previewUrls, "https://golang.org/lib/godoc/images/go-logo-blue.svg")
 
 	log.Printf("%v", previewUrls)
 
@@ -56,34 +66,60 @@ func preview(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, data)
 }
 
-func loadImage(url string) ([]byte, error) {
+func loadImage(url string) (image.Image, error) {
+	// todo make one client
 	client := &http.Client{}
 
-	resp, err := client.Get("http://example.com")
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
 
-	image, err := ioutil.ReadAll(resp.Body)
+	img, _, err := image.Decode(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	return image, nil
+	return img, nil
 }
 
-func createPreview(image []byte) ([]byte, error) {
-	return image, nil
+func createPreview(img image.Image) (image.Image, error) {
+	return img, nil
+}
+
+// todo gen names from urls
+func saveImage(img image.Image) (string, error) {
+	hash, err := uuid.NewUUID()
+	if err != nil {
+		return "", err
+	}
+
+	name := fmt.Sprintf("%s/%s.png", staticDir, hash)
+	f, err := os.Create(name)
+	if err != nil {
+		return "", nil
+	}
+
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		return "", err
+	}
+	// todo handle err
+	f.Close()
+
+	return fmt.Sprintf("%s.png", hash), nil
 }
 
 func main() {
-	imgdir := "imgs"
-	if err := os.MkdirAll(imgdir, 666); err != nil {
+	if err := os.MkdirAll(staticDir, 666); err != nil {
 		log.Fatal(err)
 	}
 
 	http.HandleFunc("/preview", preview)
+
+	fs := http.FileServer(http.Dir(staticDir))
+	http.Handle(staticPrefix, http.StripPrefix(staticPrefix, fs))
 
 	port := 8000
 	log.Printf("Server run at localhost:%d\n", port)
