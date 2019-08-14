@@ -22,7 +22,7 @@ func preview(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("%v", urls)
 
-	images := make([][]byte, 0, len(urls))
+	previews := make([][]byte, 0, len(urls))
 	for _, url := range urls {
 		image, err := loadImage(url)
 		if err != nil {
@@ -30,13 +30,6 @@ func preview(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		images = append(images, image)
-	}
-
-	log.Printf("%v", images)
-
-	previews := make([][]byte, 0, len(images))
-	for _, image := range images {
 		preview, err := createPreview(image)
 		if err != nil {
 			log.Print(err)
