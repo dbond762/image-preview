@@ -31,6 +31,7 @@ func preview(w http.ResponseWriter, r *http.Request) {
 		img, err := loadImage(url)
 		if err != nil {
 			log.Printf("Error on load image from %s", url)
+			log.Print(err)
 			continue
 		}
 
