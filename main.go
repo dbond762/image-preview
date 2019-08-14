@@ -3,13 +3,9 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"image"
-	"image/png"
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -44,7 +40,7 @@ func preview(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		previewFile, err := saveImage(preview)
+		previewFile, err := saveImage(preview, []byte(url))
 		if err != nil {
 			log.Print(err)
 			continue
@@ -64,51 +60,6 @@ func preview(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 	t.Execute(w, data)
-}
-
-func loadImage(url string) (image.Image, error) {
-	// todo make one client
-	client := &http.Client{}
-
-	resp, err := client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	img, _, err := image.Decode(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return img, nil
-}
-
-func createPreview(img image.Image) (image.Image, error) {
-	return img, nil
-}
-
-// todo gen names from urls
-func saveImage(img image.Image) (string, error) {
-	hash, err := uuid.NewUUID()
-	if err != nil {
-		return "", err
-	}
-
-	name := fmt.Sprintf("%s/%s.png", staticDir, hash)
-	f, err := os.Create(name)
-	if err != nil {
-		return "", nil
-	}
-
-	if err := png.Encode(f, img); err != nil {
-		f.Close()
-		return "", err
-	}
-	// todo handle err
-	f.Close()
-
-	return fmt.Sprintf("%s.png", hash), nil
 }
 
 func main() {
