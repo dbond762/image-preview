@@ -4,31 +4,39 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"image"
-	"image/png"
-	"log"
+	"image/jpeg"
 	"os"
 )
 
-func saveImage(img image.Image, url []byte) (string, error) {
-	md5Hash := md5.Sum(url)
-	hash := hex.EncodeToString(md5Hash[:])
+func saveImage(images <-chan *OnlineImage, names chan<- string, errors chan<- error) {
+	for img := range images {
+		md5Hash := md5.Sum([]byte(img.URL))
+		hash := hex.EncodeToString(md5Hash[:])
 
-	name := fmt.Sprintf("%s/%s.png", staticDir, hash)
+		name := fmt.Sprintf("%s/%s.png", staticDir, hash)
 
-	log.Print(name)
+		f, err := os.Create(name)
+		if err != nil {
+			errors <- err
+			continue
+		}
 
-	f, err := os.Create(name)
-	if err != nil {
-		return "", nil
+		if err := jpeg.Encode(f, img, nil); err != nil {
+			if err := f.Close(); err != nil {
+				errors <- err
+			}
+			errors <- err
+			continue
+		}
+
+		if err := f.Close(); err != nil {
+			errors <- err
+			continue
+		}
+
+		names <- fmt.Sprintf("%s.png", hash)
 	}
 
-	if err := png.Encode(f, img); err != nil {
-		f.Close()
-		return "", err
-	}
-	// todo handle err
-	f.Close()
-
-	return fmt.Sprintf("%s.png", hash), nil
+	close(names)
+	close(errors)
 }

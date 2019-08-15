@@ -5,20 +5,30 @@ import (
 	"net/http"
 )
 
-func loadImage(url string) (image.Image, error) {
-	// todo make one client
+func loadImage(urls []string, images chan<- *OnlineImage, errors chan<- error) {
 	client := &http.Client{}
 
-	resp, err := client.Get(url)
-	if err != nil {
-		return nil, err
+	for _, url := range urls {
+		resp, err := client.Get(url)
+		if err != nil {
+			resp.Body.Close()
+			errors <- err
+			continue
+		}
+
+		img, _, err := image.Decode(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			errors <- err
+			continue
+		}
+
+		images <- &OnlineImage{
+			Image: img,
+			URL:   url,
+		}
 	}
 
-	img, _, err := image.Decode(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return img, nil
+	close(images)
+	close(errors)
 }

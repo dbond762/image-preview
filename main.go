@@ -11,6 +11,8 @@ import (
 const (
 	staticDir    = "imgs"
 	staticPrefix = "/imgs/"
+
+	port = 8000
 )
 
 type Data struct {
@@ -24,30 +26,37 @@ func preview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("%v", urls)
+	log.Print(urls)
+
+	var (
+		images   = make(chan *OnlineImage)
+		previews = make(chan *OnlineImage)
+		names    = make(chan string)
+
+		loadErrors = make(chan error)
+		saveErrors = make(chan error)
+	)
+
+	go loadImage(urls, images, loadErrors)
+	go createPreview(images, previews)
+	go saveImage(previews, names, saveErrors)
+
+	go func(errors []chan error) {
+		for _, errorChan := range errors {
+			go func(errorChan <-chan error) {
+				for err := range errorChan {
+					log.Print(err)
+				}
+			}(errorChan)
+		}
+	}([]chan error{
+		loadErrors,
+		saveErrors,
+	})
 
 	previewUrls := make([]string, 0, len(urls))
-	for _, url := range urls {
-		img, err := loadImage(url)
-		if err != nil {
-			log.Printf("Error on load image from %s", url)
-			log.Print(err)
-			continue
-		}
-
-		preview, err := createPreview(img)
-		if err != nil {
-			log.Print(err)
-			continue
-		}
-
-		previewFile, err := saveImage(preview, []byte(url))
-		if err != nil {
-			log.Print(err)
-			continue
-		}
-
-		previewUrls = append(previewUrls, staticPrefix+previewFile)
+	for name := range names {
+		previewUrls = append(previewUrls, staticPrefix+name)
 	}
 
 	log.Printf("%v", previewUrls)
@@ -64,7 +73,7 @@ func preview(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	if err := os.MkdirAll(staticDir, 666); err != nil {
+	if err := os.MkdirAll(staticDir, 644); err != nil {
 		log.Fatal(err)
 	}
 
@@ -73,7 +82,6 @@ func main() {
 	fs := http.FileServer(http.Dir(staticDir))
 	http.Handle(staticPrefix, http.StripPrefix(staticPrefix, fs))
 
-	port := 8000
 	log.Printf("Server run at localhost:%d\n", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
