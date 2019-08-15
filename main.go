@@ -41,18 +41,17 @@ func preview(w http.ResponseWriter, r *http.Request) {
 	go createPreview(images, previews)
 	go saveImage(previews, names, saveErrors)
 
-	go func(errors []chan error) {
-		for _, errorChan := range errors {
-			go func(errorChan <-chan error) {
-				for err := range errorChan {
-					log.Print(err)
-				}
-			}(errorChan)
-		}
-	}([]chan error{
+	errors := []chan error{
 		loadErrors,
 		saveErrors,
-	})
+	}
+	for _, errorChan := range errors {
+		go func(errorChan <-chan error) {
+			for err := range errorChan {
+				log.Print(err)
+			}
+		}(errorChan)
+	}
 
 	previewUrls := make([]string, 0, len(urls))
 	for name := range names {
