@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"image/jpeg"
+	"image/png"
 	"os"
 )
 
@@ -21,7 +21,7 @@ func saveImage(images <-chan *OnlineImage, names chan<- string, errors chan<- er
 			continue
 		}
 
-		if err := jpeg.Encode(f, img, nil); err != nil {
+		if err := png.Encode(f, img); err != nil {
 			if err := f.Close(); err != nil {
 				errors <- err
 			}

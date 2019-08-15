@@ -3,6 +3,12 @@ package main
 import (
 	"image"
 	"net/http"
+
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+
+	_ "golang.org/x/image/webp"
 )
 
 func loadImage(urls []string, images chan<- *OnlineImage, errors chan<- error) {
