@@ -22,8 +22,7 @@ type Data struct {
 func preview(w http.ResponseWriter, r *http.Request) {
 	urls, ok := r.URL.Query()["url"]
 	if !ok {
-		http.Error(w, "Haven`t url parameter in request", http.StatusBadRequest)
-		return
+		urls = []string{}
 	}
 
 	log.Print(urls)
@@ -36,7 +35,21 @@ func preview(w http.ResponseWriter, r *http.Request) {
 		loadErrors = make(chan error)
 		saveErrors = make(chan error)
 	)
-
+	/*
+		for i := 0; i < len(urls); i++ {
+			hash := getHash(urls[i])
+			name := fmt.Sprintf("%s.png", hash)
+			ex, err := exists(name)
+			if err != nil {
+				log.Print(err)
+			}
+			if ex {
+				names <- name
+				urls = append(urls[:i], urls[i+1:]...)
+				i = i - 1
+			}
+		}
+	*/
 	go loadImage(urls, images, loadErrors)
 	go createPreview(images, previews)
 	go saveImage(previews, names, saveErrors)
@@ -58,7 +71,7 @@ func preview(w http.ResponseWriter, r *http.Request) {
 		previewUrls = append(previewUrls, staticPrefix+name)
 	}
 
-	log.Printf("%v", previewUrls)
+	log.Print(previewUrls)
 
 	data := Data{
 		Previews: previewUrls,

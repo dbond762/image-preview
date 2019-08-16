@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"image/png"
 	"os"
@@ -10,8 +8,7 @@ import (
 
 func saveImage(images <-chan *OnlineImage, names chan<- string, errors chan<- error) {
 	for img := range images {
-		md5Hash := md5.Sum([]byte(img.URL))
-		hash := hex.EncodeToString(md5Hash[:])
+		hash := getHash(img.URL)
 
 		name := fmt.Sprintf("%s/%s.png", staticDir, hash)
 
