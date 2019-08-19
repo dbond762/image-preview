@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 
@@ -15,8 +14,8 @@ type PreviewRequest struct {
 	URLs []string `json:"urls"`
 }
 
-type TemplateData struct {
-	Previews []string
+type PreviewResponse struct {
+	Previews []string `json:"previews"`
 }
 
 type PreviewHandler struct {
@@ -58,7 +57,7 @@ func (ph *PreviewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		log.Printf("%v", file)
+		log.Print("ph loop ", file.Name)
 
 		urls = append(urls[:i], urls[i+1:]...)
 		i = i - 1
@@ -89,13 +88,13 @@ func (ph *PreviewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	log.Print(previewUrls)
 
-	data := TemplateData{
+	resp := PreviewResponse{
 		Previews: previewUrls,
 	}
 
-	t, err := template.ParseFiles("tmpl/previews.tmpl")
-	if err != nil {
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(resp); err != nil {
 		log.Print(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-	t.Execute(w, data)
 }

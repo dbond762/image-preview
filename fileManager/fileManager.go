@@ -98,6 +98,7 @@ func (fm *FileManager) Add(img *onlineImage.OnlineImage) (string, error) {
 
 	go func(ctx context.Context, resetTimeout <-chan struct{}, done chan<- struct{}) {
 		timeIsOver := make(chan struct{})
+		log.Print(name, "start")
 
 		go timer.Start(fm.Timeout, resetTimeout, timeIsOver)
 
@@ -105,6 +106,7 @@ func (fm *FileManager) Add(img *onlineImage.OnlineImage) (string, error) {
 		case <-ctx.Done():
 		case <-timeIsOver:
 		}
+		log.Print(name, "done")
 
 		done <- struct{}{}
 	}(ctx, resetTimeout, done)

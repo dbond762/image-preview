@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Image Preview</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="image-loader">
+    <div class="image-loader__inputs">
+      <div class="image-loader__url-block url-block">
+        <input class="url-block__url" type="url" value="https://golang.org/lib/godoc/images/footer-gopher.jpg">
+        <span class="url-block__add">Add</span>
+        <span class="url-block__remove url-block__remove--disable">Remove</span>
+      </div>
+      <div class="image-loader__url-block url-block">
+        <input class="url-block__url" type="url" value="https://golang.org/lib/godoc/images/home-gopher.png">
+        <span class="url-block__add">Add</span>
+        <span class="url-block__remove url-block__remove--disable">Remove</span>
+      </div>
+      <div class="image-loader__url-block url-block">
+        <input class="url-block__url" type="url" value="https://i.pinimg.com/originals/bc/75/22/bc75225ef044d29d1f2d1c051d9b8063.gif">
+        <span class="url-block__add">Add</span>
+        <span class="url-block__remove url-block__remove--disable">Remove</span>
+      </div>
+    </div>
+    <input class="image-loader__load" type="button" value="Загрузить">
+  </div>
+  <div class="previews"></div>
+
+  <script src="main.js"></script>
+</body>
+
+</html>

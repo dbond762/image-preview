@@ -2,6 +2,7 @@ package timer
 
 import (
 	"context"
+	"log"
 	"time"
 )
 
@@ -18,6 +19,7 @@ func Start(timeout time.Duration, resetTimeout <-chan struct{}, timeIsOver chan<
 
 		select {
 		case <-resetTimeout:
+			log.Print("reset")
 			cancel()
 			continue
 		case <-stopTimer:

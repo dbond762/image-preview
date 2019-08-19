@@ -36,8 +36,11 @@ func main() {
 
 	http.Handle("/preview", preview)
 
-	fs := http.FileServer(http.Dir(staticDir))
-	http.Handle(staticPrefix, http.StripPrefix(staticPrefix, fs))
+	imagesFS := http.FileServer(http.Dir(staticDir))
+	http.Handle(staticPrefix, http.StripPrefix(staticPrefix, imagesFS))
+
+	staticFS := http.FileServer(http.Dir("static/"))
+	http.Handle("/", staticFS)
 
 	log.Printf("Server run at localhost:%d\n", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
