@@ -1,4 +1,4 @@
-package onlineImage
+package main
 
 import (
 	"image"

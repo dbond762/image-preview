@@ -2,16 +2,16 @@ package main
 
 import (
 	"image"
+	"net/http"
+
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"net/http"
 
-	"github.com/dbond762/image-preview/onlineImage"
 	_ "golang.org/x/image/webp"
 )
 
-func loadImage(urls []string, images chan<- *onlineImage.OnlineImage, errors chan<- error) {
+func loadImage(urls []string, images chan<- *OnlineImage, errors chan<- error) {
 	client := &http.Client{}
 
 	for _, url := range urls {
@@ -29,7 +29,7 @@ func loadImage(urls []string, images chan<- *onlineImage.OnlineImage, errors cha
 			continue
 		}
 
-		images <- &onlineImage.OnlineImage{
+		images <- &OnlineImage{
 			Image: img,
 			URL:   url,
 		}
