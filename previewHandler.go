@@ -6,6 +6,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/dbond762/image-preview/fileManager"
+	"github.com/dbond762/image-preview/onlineImage"
 )
 
 type PreviewRequest struct {
@@ -17,8 +20,8 @@ type TemplateData struct {
 }
 
 type PreviewHandler struct {
-	fileManager *FileManager
-	numOfFiles  int
+	manager    *fileManager.FileManager
+	numOfFiles int
 }
 
 func (ph *PreviewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,8 +43,8 @@ func (ph *PreviewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Print(urls)
 
 	var (
-		images   = make(chan *OnlineImage)
-		previews = make(chan *OnlineImage)
+		images   = make(chan *onlineImage.OnlineImage)
+		previews = make(chan *onlineImage.OnlineImage)
 		names    = make(chan string)
 
 		loadErrors = make(chan error)
@@ -49,8 +52,8 @@ func (ph *PreviewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 
 	for i := 0; i < len(urls); i++ {
-		file, err := ph.fileManager.FindFileAndResetTimeout(urls[i])
-		if err != nil || err == errFileNotFound {
+		file, err := ph.manager.FindFileAndResetTimeout(urls[i])
+		if err != nil || err == fileManager.ErrFileNotFound {
 			log.Print(err)
 			continue
 		}
@@ -60,12 +63,12 @@ func (ph *PreviewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		urls = append(urls[:i], urls[i+1:]...)
 		i = i - 1
 
-		names <- file.name[len(staticDir):]
+		names <- file.Name[len(staticDir):]
 	}
 
 	go loadImage(urls, images, loadErrors)
 	go createPreview(images, previews)
-	go saveImage(ph.fileManager, previews, names, saveErrors)
+	go saveImage(ph.manager, previews, names, saveErrors)
 
 	errors := []chan error{
 		loadErrors,

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/dbond762/image-preview/fileManager"
 )
 
 const (
@@ -28,8 +30,8 @@ func main() {
 	}
 
 	preview := &PreviewHandler{
-		fileManager: NewFileManager(timeout, numOfFiles),
-		numOfFiles:  numOfFiles,
+		manager:    fileManager.New(staticDir, timeout, numOfFiles),
+		numOfFiles: numOfFiles,
 	}
 
 	http.Handle("/preview", preview)
